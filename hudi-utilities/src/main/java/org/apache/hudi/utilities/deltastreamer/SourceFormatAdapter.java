@@ -55,7 +55,7 @@ public final class SourceFormatAdapter {
   /**
    * Fetch new data in avro format. If the source provides data in different format, they are translated to Avro format
    */
-  public InputBatch<JavaRDD<GenericRecord>> fetchNewDataInAvroFormat(Option<String> lastCkptStr, long sourceLimit) {
+  public InputBatch<JavaRDD<GenericRecord>> fetchNewDataInAvroFormat(Option<String> lastCkptStr, long sourceLimit) throws Exception {
     switch (source.getSourceType()) {
       case AVRO:
         return ((AvroSource) source).fetchNext(lastCkptStr, sourceLimit);
@@ -81,6 +81,9 @@ public final class SourceFormatAdapter {
             })
             .orElse(null)), r.getCheckpointForNextBatch(), r.getSchemaProvider());
       }
+      case PROTOBUF: {
+
+      }
       default:
         throw new IllegalArgumentException("Unknown source type (" + source.getSourceType() + ")");
     }
@@ -89,7 +92,7 @@ public final class SourceFormatAdapter {
   /**
    * Fetch new data in row format. If the source provides data in different format, they are translated to Row format
    */
-  public InputBatch<Dataset<Row>> fetchNewDataInRowFormat(Option<String> lastCkptStr, long sourceLimit) {
+  public InputBatch<Dataset<Row>> fetchNewDataInRowFormat(Option<String> lastCkptStr, long sourceLimit) throws Exception {
     switch (source.getSourceType()) {
       case ROW:
         return ((RowSource) source).fetchNext(lastCkptStr, sourceLimit);

@@ -270,6 +270,12 @@
       <artifactId>joda-time</artifactId>
       <scope>test</scope>
     </dependency>
+      <dependency>
+          <groupId>io.confluent</groupId>
+          <artifactId>kafka-schema-registry-client</artifactId>
+          <version>${confluent.version}</version>
+          <scope>compile</scope>
+      </dependency>
 
   </dependencies>
 </project>
