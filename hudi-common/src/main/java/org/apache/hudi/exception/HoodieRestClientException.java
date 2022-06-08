@@ -24,13 +24,13 @@ import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientExcept
  * Hoodie rest client exception.
  */
 public class HoodieRestClientException extends HoodieException {
-    private RestClientException restClientException;
-    public HoodieRestClientException(String msg, RestClientException r) {
-        super(msg, r);
-        this.restClientException = r;
-    }
+  private RestClientException restClientException;
+  public HoodieRestClientException(String msg, RestClientException r) {
+    super(msg, r);
+    this.restClientException = r;
+  }
 
-    public RestClientException getRestClientException() {
-        return restClientException;
-    }
+  public RestClientException getRestClientException() {
+    return restClientException;
+  }
 }

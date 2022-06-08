@@ -55,7 +55,7 @@ public final class SourceFormatAdapter {
   /**
    * Fetch new data in avro format. If the source provides data in different format, they are translated to Avro format
    */
-  public InputBatch<JavaRDD<GenericRecord>> fetchNewDataInAvroFormat(Option<String> lastCkptStr, long sourceLimit) throws Exception {
+  public InputBatch<JavaRDD<GenericRecord>> fetchNewDataInAvroFormat(Option<String> lastCkptStr, long sourceLimit) {
     switch (source.getSourceType()) {
       case AVRO:
         return ((AvroSource) source).fetchNext(lastCkptStr, sourceLimit);
@@ -82,7 +82,8 @@ public final class SourceFormatAdapter {
             .orElse(null)), r.getCheckpointForNextBatch(), r.getSchemaProvider());
       }
       case PROTOBUF: {
-
+        // TODO add LATER
+        throw new IllegalArgumentException("Unknown source type (" + source.getSourceType() + ")");
       }
       default:
         throw new IllegalArgumentException("Unknown source type (" + source.getSourceType() + ")");
@@ -92,7 +93,7 @@ public final class SourceFormatAdapter {
   /**
    * Fetch new data in row format. If the source provides data in different format, they are translated to Row format
    */
-  public InputBatch<Dataset<Row>> fetchNewDataInRowFormat(Option<String> lastCkptStr, long sourceLimit) throws Exception {
+  public InputBatch<Dataset<Row>> fetchNewDataInRowFormat(Option<String> lastCkptStr, long sourceLimit) {
     switch (source.getSourceType()) {
       case ROW:
         return ((RowSource) source).fetchNext(lastCkptStr, sourceLimit);
@@ -117,6 +118,10 @@ public final class SourceFormatAdapter {
             Option.ofNullable(
                 r.getBatch().map(rdd -> source.getSparkSession().read().schema(dataType).json(rdd)).orElse(null)),
             r.getCheckpointForNextBatch(), r.getSchemaProvider());
+      }
+      case PROTOBUF: {
+        // TODO add LATER
+        throw new IllegalArgumentException("Unknown source type (" + source.getSourceType() + ")");
       }
       default:
         throw new IllegalArgumentException("Unknown source type (" + source.getSourceType() + ")");

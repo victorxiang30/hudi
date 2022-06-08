@@ -18,17 +18,14 @@
 
 package org.apache.hudi.utilities.schema;
 
-import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import org.apache.hudi.ApiMaturityLevel;
 import org.apache.hudi.PublicAPIClass;
 import org.apache.hudi.PublicAPIMethod;
 import org.apache.hudi.common.config.TypedProperties;
 
-import org.apache.avro.Schema;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
 import org.apache.spark.api.java.JavaSparkContext;
 
-import java.io.IOException;
 import java.io.Serializable;
 
 /**
@@ -38,25 +35,25 @@ import java.io.Serializable;
 @PublicAPIClass(maturity = ApiMaturityLevel.STABLE)
 public abstract class GrabSchemaProvider implements Serializable {
 
-    protected TypedProperties config;
+  protected TypedProperties config;
 
-    protected JavaSparkContext jssc;
+  protected JavaSparkContext jssc;
 
-    public GrabSchemaProvider(TypedProperties props) {
-        this(props, null);
-    }
+  public GrabSchemaProvider(TypedProperties props) {
+    this(props, null);
+  }
 
-    protected GrabSchemaProvider(TypedProperties props, JavaSparkContext jssc) {
-        this.config = props;
-        this.jssc = jssc;
-    }
+  protected GrabSchemaProvider(TypedProperties props, JavaSparkContext jssc) {
+    this.config = props;
+    this.jssc = jssc;
+  }
 
-    @PublicAPIMethod(maturity = ApiMaturityLevel.STABLE)
-    public abstract ParsedSchema getSourceSchema();
+  @PublicAPIMethod(maturity = ApiMaturityLevel.STABLE)
+  public abstract ParsedSchema getSourceSchema();
 
-    @PublicAPIMethod(maturity = ApiMaturityLevel.STABLE)
-    public ParsedSchema getTargetSchema() {
-        // by default, use source schema as target for hoodie table as well
-        return getSourceSchema();
-    }
+  @PublicAPIMethod(maturity = ApiMaturityLevel.STABLE)
+  public ParsedSchema getTargetSchema() {
+    // by default, use source schema as target for hoodie table as well
+    return getSourceSchema();
+  }
 }
