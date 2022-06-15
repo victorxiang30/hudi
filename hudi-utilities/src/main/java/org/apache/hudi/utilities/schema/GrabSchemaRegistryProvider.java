@@ -34,6 +34,7 @@ import io.confluent.kafka.schemaregistry.client.SchemaMetadata;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
+import org.apache.avro.Schema;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -106,4 +107,10 @@ public class GrabSchemaRegistryProvider extends GrabSchemaProvider {
     return fetchSchemaWithInjector(registryUrl);
   }
 
+  public Schema getAvroSchema() {
+    ProtobufSchema protobufSchema = (ProtobufSchema) getSourceSchema();
+    String schemaString = protobufSchema.canonicalString();
+    Schema.Parser parser = new Schema.Parser();
+    return parser.parse(schemaString);
+  }
 }

@@ -23,7 +23,9 @@ import org.apache.hudi.PublicAPIClass;
 import org.apache.hudi.PublicAPIMethod;
 import org.apache.hudi.common.config.TypedProperties;
 
+//import io.confluent.connect.protobuf.ProtobufData;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
+import org.apache.avro.Schema;
 import org.apache.spark.api.java.JavaSparkContext;
 
 import java.io.Serializable;
@@ -56,4 +58,6 @@ public abstract class GrabSchemaProvider implements Serializable {
     // by default, use source schema as target for hoodie table as well
     return getSourceSchema();
   }
+
+  public abstract Schema getAvroSchema();
 }

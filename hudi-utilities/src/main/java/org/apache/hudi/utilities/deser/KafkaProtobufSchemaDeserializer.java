@@ -19,7 +19,7 @@
 //package org.apache.hudi.utilities.deser;
 //
 //import com.google.protobuf.Descriptors;
-//import com.google.protobuf.DynamicMessage;
+//import com.google.protobuf.ParsedSchema;
 //import io.confluent.kafka.schemaregistry.client.SchemaMetadata;
 //import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 //import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
