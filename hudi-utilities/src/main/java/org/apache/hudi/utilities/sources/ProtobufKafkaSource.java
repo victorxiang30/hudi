@@ -18,17 +18,14 @@
 
 package org.apache.hudi.utilities.sources;
 
-import io.confluent.connect.protobuf.ProtobufData;
-import io.confluent.connect.avro.AvroData;
-import org.apache.avro.generic.GenericRecord;
-import org.apache.kafka.connect.data.Schema;
+//import org.apache.avro.generic.GenericRecord;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 
 import org.apache.hudi.DataSourceWriteOptions;
 import org.apache.hudi.common.config.TypedProperties;
 import org.apache.hudi.common.util.Option;
 import org.apache.hudi.exception.HoodieException;
-import org.apache.hudi.utilities.deltastreamer.GrabHelper;
+//import org.apache.hudi.utilities.deltastreamer.GrabHelper;
 import org.apache.hudi.utilities.deltastreamer.HoodieDeltaStreamerMetrics;
 //import org.apache.hudi.utilities.deser.KafkaProtobufSchemaDeserializer;
 import org.apache.hudi.utilities.exception.HoodieSourceTimeoutException;
@@ -52,6 +49,7 @@ import org.apache.spark.streaming.kafka010.OffsetRange;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
+import com.google.protobuf.util.JsonFormat;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -106,7 +104,7 @@ public class ProtobufKafkaSource extends ProtobufSource {
   }
 
   @Override
-  protected InputBatch<JavaRDD<GenericRecord>> fetchNewData(Option<String> lastCheckpointStr, long sourceLimit) {
+  protected InputBatch<JavaRDD<String>> fetchNewData(Option<String> lastCheckpointStr, long sourceLimit) {
     try {
       OffsetRange[] offsetRanges = offsetGen.getNextOffsetRanges(lastCheckpointStr, sourceLimit, metrics);
       long totalNewMsgs = CheckpointUtils.totalNewMessages(offsetRanges);
@@ -115,15 +113,8 @@ public class ProtobufKafkaSource extends ProtobufSource {
         return new InputBatch<>(Option.empty(), CheckpointUtils.offsetsToStr(offsetRanges));
       }
       JavaRDD<DynamicMessage> newDataRDD = toRDD(offsetRanges);
-
-      ProtobufSchema protobufSchema = (ProtobufSchema) this.schemaProvider.getSourceSchema();
-      ProtobufData protobufData = new ProtobufData();
-      AvroData avroData = new AvroData(1000);
-      Schema connectSchema = protobufData.toConnectSchema(protobufSchema);
-
-      JavaRDD<GenericRecord> transformedNewDataRDD =
-          newDataRDD.map(msg -> GrabHelper.toInnerSchemaAndValue(protobufSchema, msg, protobufData))
-              .map(msg -> (GenericRecord) avroData.fromConnectData(connectSchema, msg));
+      JavaRDD<String> transformedNewDataRDD =
+          newDataRDD.map(msg -> JsonFormat.printer().print(msg));
 
       return new InputBatch<>(Option.of(transformedNewDataRDD), CheckpointUtils.offsetsToStr(offsetRanges));
     } catch (org.apache.kafka.common.errors.TimeoutException e) {

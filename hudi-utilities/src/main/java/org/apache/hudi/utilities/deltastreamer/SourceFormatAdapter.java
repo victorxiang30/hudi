@@ -86,7 +86,11 @@ public final class SourceFormatAdapter {
       }
       case PROTOBUF: {
         // TODO convert to avro
-        return ((ProtobufSource) source).fetchNext(lastCkptStr, sourceLimit);
+        InputBatch<JavaRDD<String>> r = ((ProtobufSource) source).fetchNext(lastCkptStr, sourceLimit);
+        AvroConvertor convertor = new AvroConvertor(r.getGrabSchemaProvider().getAvroSchema());
+        return new InputBatch<>(Option.ofNullable(r.getBatch().map(rdd -> rdd.map(convertor::fromJson)).orElse(null)),
+            r.getCheckpointForNextBatch(), r.getGrabSchemaProvider());
+
       }
       default:
         throw new IllegalArgumentException("Unknown source type (" + source.getSourceType() + ")");
@@ -124,17 +128,13 @@ public final class SourceFormatAdapter {
       }
       case PROTOBUF: {
         // TODO convert to avro
-        InputBatch<JavaRDD<GenericRecord>> r = ((ProtobufSource) source).fetchNext(lastCkptStr, sourceLimit);
+        InputBatch<JavaRDD<String>> r = ((ProtobufSource) source).fetchNext(lastCkptStr, sourceLimit);
         Schema sourceSchema = r.getGrabSchemaProvider().getAvroSchema();
+        StructType dataType = AvroConversionUtils.convertAvroSchemaToStructType(sourceSchema);
         return new InputBatch<>(
-            Option
-                .ofNullable(
-                    r.getBatch()
-                        .map(rdd -> AvroConversionUtils.createDataFrame(JavaRDD.toRDD(rdd), sourceSchema.toString(),
-                            source.getSparkSession())
-                        )
-                        .orElse(null)),
-            r.getCheckpointForNextBatch(), r.getSchemaProvider());
+            Option.ofNullable(
+                r.getBatch().map(rdd -> source.getSparkSession().read().schema(dataType).json(rdd)).orElse(null)),
+            r.getCheckpointForNextBatch(), r.getGrabSchemaProvider());
       }
       default:
         throw new IllegalArgumentException("Unknown source type (" + source.getSourceType() + ")");
