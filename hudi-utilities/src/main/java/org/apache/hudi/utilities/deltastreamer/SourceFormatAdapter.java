@@ -27,9 +27,12 @@ import org.apache.hudi.utilities.schema.SchemaProvider;
 import org.apache.hudi.utilities.sources.AvroSource;
 import org.apache.hudi.utilities.sources.InputBatch;
 import org.apache.hudi.utilities.sources.JsonSource;
+import org.apache.hudi.utilities.sources.ProtobufSource;
 import org.apache.hudi.utilities.sources.RowSource;
 import org.apache.hudi.utilities.sources.Source;
 import org.apache.hudi.utilities.sources.helpers.AvroConvertor;
+
+//import io.confluent.connect.avro.AvroData;
 
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
@@ -68,22 +71,22 @@ public final class SourceFormatAdapter {
       case ROW: {
         InputBatch<Dataset<Row>> r = ((RowSource) source).fetchNext(lastCkptStr, sourceLimit);
         return new InputBatch<>(Option.ofNullable(r.getBatch().map(
-            rdd -> {
-              SchemaProvider originalProvider = UtilHelpers.getOriginalSchemaProvider(r.getSchemaProvider());
-              return (originalProvider instanceof FilebasedSchemaProvider)
-                  // If the source schema is specified through Avro schema,
-                  // pass in the schema for the Row-to-Avro conversion
-                  // to avoid nullability mismatch between Avro schema and Row schema
-                  ? HoodieSparkUtils.createRdd(rdd, HOODIE_RECORD_STRUCT_NAME, HOODIE_RECORD_NAMESPACE, true,
-                  org.apache.hudi.common.util.Option.ofNullable(r.getSchemaProvider().getSourceSchema())
-              ).toJavaRDD() : HoodieSparkUtils.createRdd(rdd,
-                  HOODIE_RECORD_STRUCT_NAME, HOODIE_RECORD_NAMESPACE, false, Option.empty()).toJavaRDD();
-            })
-            .orElse(null)), r.getCheckpointForNextBatch(), r.getSchemaProvider());
+          rdd -> {
+            SchemaProvider originalProvider = UtilHelpers.getOriginalSchemaProvider(r.getSchemaProvider());
+            return (originalProvider instanceof FilebasedSchemaProvider)
+                // If the source schema is specified through Avro schema,
+                // pass in the schema for the Row-to-Avro conversion
+                // to avoid nullability mismatch between Avro schema and Row schema
+                ? HoodieSparkUtils.createRdd(rdd, HOODIE_RECORD_STRUCT_NAME, HOODIE_RECORD_NAMESPACE, true,
+                org.apache.hudi.common.util.Option.ofNullable(r.getSchemaProvider().getSourceSchema())
+            ).toJavaRDD() : HoodieSparkUtils.createRdd(rdd,
+                HOODIE_RECORD_STRUCT_NAME, HOODIE_RECORD_NAMESPACE, false, Option.empty()).toJavaRDD();
+          })
+      .orElse(null)), r.getCheckpointForNextBatch(), r.getSchemaProvider());
       }
       case PROTOBUF: {
-        // TODO add LATER
-        throw new IllegalArgumentException("Unknown source type (" + source.getSourceType() + ")");
+        // TODO convert to avro
+        return ((ProtobufSource) source).fetchNext(lastCkptStr, sourceLimit);
       }
       default:
         throw new IllegalArgumentException("Unknown source type (" + source.getSourceType() + ")");
@@ -120,8 +123,18 @@ public final class SourceFormatAdapter {
             r.getCheckpointForNextBatch(), r.getSchemaProvider());
       }
       case PROTOBUF: {
-        // TODO add LATER
-        throw new IllegalArgumentException("Unknown source type (" + source.getSourceType() + ")");
+        // TODO convert to avro
+        InputBatch<JavaRDD<GenericRecord>> r = ((ProtobufSource) source).fetchNext(lastCkptStr, sourceLimit);
+        Schema sourceSchema = r.getGrabSchemaProvider().getAvroSchema();
+        return new InputBatch<>(
+            Option
+                .ofNullable(
+                    r.getBatch()
+                        .map(rdd -> AvroConversionUtils.createDataFrame(JavaRDD.toRDD(rdd), sourceSchema.toString(),
+                            source.getSparkSession())
+                        )
+                        .orElse(null)),
+            r.getCheckpointForNextBatch(), r.getGrabSchemaProvider());
       }
       default:
         throw new IllegalArgumentException("Unknown source type (" + source.getSourceType() + ")");

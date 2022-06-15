@@ -22,6 +22,7 @@ import org.apache.hudi.common.config.TypedProperties;
 import org.apache.hudi.common.util.Option;
 import org.apache.hudi.exception.HoodieException;
 import org.apache.hudi.utilities.schema.SchemaProvider;
+import org.apache.hudi.utilities.schema.GrabSchemaProvider;
 
 import org.apache.avro.Schema;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -32,15 +33,24 @@ public class InputBatch<T> {
   private final Option<T> batch;
   private final String checkpointForNextBatch;
   private final SchemaProvider schemaProvider;
+  private final GrabSchemaProvider grabSchemaProvider;
 
   public InputBatch(Option<T> batch, String checkpointForNextBatch, SchemaProvider schemaProvider) {
     this.batch = batch;
     this.checkpointForNextBatch = checkpointForNextBatch;
     this.schemaProvider = schemaProvider;
+    this.grabSchemaProvider = null;
+  }
+
+  public InputBatch(Option<T> batch, String checkpointForNextBatch, GrabSchemaProvider grabSchemaProvider) {
+    this.batch = batch;
+    this.checkpointForNextBatch = checkpointForNextBatch;
+    this.schemaProvider = null;
+    this.grabSchemaProvider = grabSchemaProvider;
   }
 
   public InputBatch(Option<T> batch, String checkpointForNextBatch) {
-    this(batch, checkpointForNextBatch, null);
+    this(batch, checkpointForNextBatch, (SchemaProvider) null);
   }
 
   public Option<T> getBatch() {
@@ -56,6 +66,10 @@ public class InputBatch<T> {
       throw new HoodieException("Please provide a valid schema provider class!");
     }
     return Option.ofNullable(schemaProvider).orElse(new NullSchemaProvider());
+  }
+
+  public GrabSchemaProvider getGrabSchemaProvider() {
+    return grabSchemaProvider;
   }
 
   public static class NullSchemaProvider extends SchemaProvider {
